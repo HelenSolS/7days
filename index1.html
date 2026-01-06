@@ -1,0 +1,56 @@
+<script>
+  const tg = window.Telegram?.WebApp || null;
+
+  // В браузере tg = null, в Telegram tg = объект
+  if (tg) {
+    tg.expand();
+    tg.ready?.();
+  } else {
+    console.log("Открыто не в Telegram WebApp, режим предпросмотра.");
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const day = urlParams.get('day') || "1";
+
+  // ... твой contentData ...
+
+  function render() {
+    const data = contentData[day];
+    const app = document.getElementById('app');
+    if (!data) {
+      app.innerHTML = `<div class="py-20 text-center text-stone-300">Контент готовится...</div>`;
+      return;
+    }
+    app.innerHTML = `...`; // как у тебя
+  }
+
+  async function handleSend() {
+    const val = document.getElementById('answer').value;
+
+    // В браузере разрешим отправить "как тест" или покажем подсказку
+    if (!val) {
+      if (tg) tg.HapticFeedback.notificationOccurred('warning');
+      alert("Напиши ответ 🙂");
+      return;
+    }
+
+    const report = {
+      day,
+      user: tg?.initDataUnsafe?.user?.first_name || "Preview",
+      answer: val,
+      date: new Date().toLocaleString('ru-RU')
+    };
+
+    if (!tg) {
+      alert("Это предпросмотр в браузере. В Telegram отчет отправится через sendData().\n\n" + JSON.stringify(report, null, 2));
+      return;
+    }
+
+    tg.HapticFeedback.impactOccurred('medium');
+    tg.showConfirm("Отправить отчет и завершить день?", (ok) => {
+      if (ok) tg.sendData(JSON.stringify(report));
+    });
+  }
+
+  render();
+</script>
