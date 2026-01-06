@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Приквел: Возвращение в тело</title>
+    <script src="[https://telegram.org/js/telegram-web-app.js](https://telegram.org/js/telegram-web-app.js)"></script>
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <link href="[https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Lora:ital,wght@0,700;1,400&display=swap](https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Lora:ital,wght@0,700;1,400&display=swap)" rel="stylesheet">
+    <style>
+        :root { --bg-color: #FDFCFB; --accent-color: #D97706; --text-main: #292524; }
+        body { font-family: 'Nunito', sans-serif; background-color: var(--bg-color); color: var(--text-main); -webkit-tap-highlight-color: transparent; line-height: 1.6; }
+        .serif { font-family: 'Lora', serif; }
+        .media-box { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 2.5rem; overflow: hidden; background: #E7E5E4; box-shadow: 0 20px 40px -15px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+        .media-box img { width: 100%; height: 100%; object-fit: cover; }
+        .media-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.4)); display: flex; align-items: flex-end; padding: 1.5rem; }
+        .glass-tag { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 4px 12px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
+        .card-clay { background: #ffffff; border-radius: 2.5rem; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 10px 30px -5px rgba(0,0,0,0.02); }
+        .input-custom { background: #F5F5F4; border: 1px solid transparent; transition: all 0.3s ease; border-radius: 1.25rem; padding: 1rem; width: 100%; color: #1c1917; font-size: 0.875rem; outline: none; }
+        .input-custom:focus { background: #ffffff; border-color: var(--accent-color); box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.1); }
+        .btn-main { background: #1C1917; color: white; width: 100%; padding: 1.25rem; border-radius: 1.5rem; font-weight: 700; font-size: 0.875rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 10px 20px -5px rgba(28, 25, 23, 0.3); }
+        .btn-main:active { transform: scale(0.96); opacity: 0.9; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-up { animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+    </style>
+</head>
+<body class="p-6">
+    <div id="app" class="max-w-md mx-auto"></div>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        const urlParams = new URLSearchParams(window.location.search);
+        const day = urlParams.get('day') || "1";
+        const contentData = {
+            "1": { tag: "Осознанность", title: "Где ты прячешься?", img: "[https://images.unsplash.com/photo-1518191775741-0941936c6411?auto=format&fit=crop&w=1000&q=80](https://images.unsplash.com/photo-1518191775741-0941936c6411?auto=format&fit=crop&w=1000&q=80)", desc: "Мы живем на автопилоте. Мы в голове, а не в теле. И теряем жизнь «по дороге». Сегодня мы просто постучимся в дверь и спросим: «Ты тут?»", science: "Исследование Harvard University (Killingsworth & Gilbert): 47% времени наши мысли блуждают, что напрямую снижает уровень счастья.", practice: "Разотри ладони до жара. Приложи их туда, где чувствуешь зажим (шея, живот, лицо). Просто побудь с этим теплом 1 минуту.", question: "Какое место в теле сегодня «заговорило» с тобой сильнее всего?" },
+            "2": { tag: "Питание", title: "Вкус жизни", img: "[https://images.unsplash.com/photo-1490818387583-1baba5e638af?auto=format&fit=crop&w=1000&q=80](https://images.unsplash.com/photo-1490818387583-1baba5e638af?auto=format&fit=crop&w=1000&q=80)", desc: "Наш мозг перестает «видеть» еду к середине тарелки. Мы едим много не от голода, а потому что не успели почувствовать вкус.", science: "Эффект сенсорно-специфического насыщения (Rolls, B. J. 1981): осознанность первых укусов снижает риск переедания на 30%.", practice: "Первые три укуса съешь с закрытыми глазами. Изучи текстуру, аромат и как раскрывается вкус на языке.", question: "Что нового ты почувствовала в привычном продукте сегодня?" },
+            "3": { tag: "Эмоции", title: "Чей это голос?", img: "[https://images.unsplash.com/photo-1499209974431-9dac3adaf471?auto=format&fit=crop&w=1000&q=80](https://images.unsplash.com/photo-1499209974431-9dac3adaf471?auto=format&fit=crop&w=1000&q=80)", desc: "Эмоциональный голод кричит в голове, физический — шепчет в желудке. Сегодня мы учимся их различать.", science: "Стресс повышает уровень кортизола, который заставляет мозг искать высококалорийную «утешительную» еду (Yale University).", practice: "Перед едой сделай паузу на 10 секунд. Спроси себя: «Я хочу заполнить желудок или успокоить эмоцию?»", question: "Кто сегодня вел тебя к еде: реальный голод или эмоция?" },
+            "4": { tag: "Энергия", title: "Разморозка", img: "[https://images.unsplash.com/photo-1545208393-596371ba4a2f?auto=format&fit=crop&w=1000&q=80](https://images.unsplash.com/photo-1545208393-596371ba4a2f?auto=format&fit=crop&w=1000&q=80)", desc: "Стресс — это биологическая программа. Если ты не двигаешься, она «замерзает» в мышцах, превращаясь в хроническую усталость.", science: "Метод Соматического Переживания (Питер Левин): тряска и выдох завершают цикл стресс-реакции организма.", practice: "1 минуту мелко тряси всем телом. Стряхни напряжение, как воду. Сделай длинный выдох через губы трубочкой.", question: "Где в теле стало легче после упражнения «Разморозка»?" },
+            "5": { tag: "Биохимия", title: "Тайные жители", img: "[https://images.unsplash.com/photo-1559591937-e3b32080345d?auto=format&fit=crop&w=1000&q=80](https://images.unsplash.com/photo-1559591937-e3b32080345d?auto=format&fit=crop&w=1000&q=80)", desc: "Твоя тяга к сладкому — это часто не ты, а крик бактерий в твоем кишечнике. Они захватили пульт управления твоим вниманием.", science: "Микробиота кишечника способна манипулировать поведением хозяина через сигналы блуждающего нерва (BioEssays Journal).", practice: "Начни обед с клетчатки (зелень, овощи). Создай барьер, который не даст сахару резко ударить по твоему мозгу.", question: "Удалось ли тебе сегодня быть осознаннее своих бактерий?" },
+            "6": { tag: "Восстановление", title: "Сон. Перезагрузка", img: "[https://images.unsplash.com/photo-1511295742364-917e703b1972?auto=format&fit=crop&w=1000&q=80](https://images.unsplash.com/photo-1511295742364-917e703b1972?auto=format&fit=crop&w=1000&q=80)", desc: "Еда на ночь — это кредит у завтрашней бодрости. Тело не чинит клетки, а работает в «ночную смену» над твоим ужином.", science: "Высокий инсулин в вечернее время блокирует выработку мелатонина и гормона роста (Salk Institute for Biological Studies).", practice: "Закрой кухню за 3 часа до сна. За час убери телефон — дай мозгу понять, что ночь действительно наступила.", question: "Как изменилось твое самочувствие утром после «чистой» ночи?" },
+            "7": { tag: "Финал", title: "Новая Я", img: "[https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1000&q=80](https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1000&q=80)", desc: "Ты больше не «голова на палочке». Ты дома. Твой роман с собой только начинается. Важно не достигать, а присутствовать.", science: "Нейропластичность подтверждает: за 7 дней внимания ты физически укрепила нейронные пути самоконтроля.", practice: "Выбери ОДНУ практику приквела. Пообещай себе делать её следующие 30 дней. Это твой новый фундамент.", question: "Какую одну практику ты забираешь с собой навсегда?" }
+        };
+        function render() {
+            const data = contentData[day];
+            const app = document.getElementById('app');
+            if (!data) { app.innerHTML = `<div class="py-20 text-center text-stone-300">Контент готовится...</div>`; return; }
+            app.innerHTML = `
+                <div class="animate-up">
+                    <div class="media-box">
+                        <img src="${data.img}" alt="${data.title}">
+                        <div class="media-overlay"><span class="glass-tag">${data.tag}</span></div>
+                    </div>
+                    <header class="mb-8">
+                        <p class="text-[10px] font-extrabold text-amber-600 uppercase tracking-widest mb-1">День ${day}</p>
+                        <h1 class="serif text-4xl font-bold text-stone-900 leading-tight">${data.title}</h1>
+                    </header>
+                    <div class="space-y-8">
+                        <section><p class="text-stone-600 text-[15px] leading-relaxed">${data.desc}</p></section>
+                        <div class="bg-amber-50 p-6 rounded-[2rem] border border-amber-100/50">
+                            <h4 class="text-[10px] font-black text-amber-700 uppercase tracking-wider mb-2">Научный базис</h4>
+                            <p class="text-xs text-amber-900/70 leading-relaxed italic">${data.science}</p>
+                        </div>
+                        <section class="card-clay p-8">
+                            <h3 class="font-extrabold text-xs uppercase tracking-widest text-stone-400 mb-4 text-center">Практика дня</h3>
+                            <p class="text-stone-800 font-semibold text-center leading-relaxed mb-8">${data.practice}</p>
+                            <div class="space-y-4">
+                                <label class="block text-[11px] font-bold text-stone-400 uppercase text-center">${data.question}</label>
+                                <textarea id="answer" class="input-custom" rows="3" placeholder="Твои ощущения..."></textarea>
+                                <button onclick="handleSend()" class="btn-main">Я ВЫПОЛНИЛА</button>
+                            </div>
+                        </section>
+                    </div>
+                </div>`;
+        }
+        async function handleSend() {
+            const val = document.getElementById('answer').value;
+            if (!val) { tg.HapticFeedback.notificationOccurred('warning'); return; }
+            const report = { day, user: tg.initDataUnsafe?.user?.first_name || "Аноним", answer: val, date: new Date().toLocaleString('ru-RU') };
+            tg.HapticFeedback.impactOccurred('medium');
+            tg.showConfirm("Отправить отчет и завершить день?", async (ok) => { if (ok) { tg.sendData(JSON.stringify(report)); } });
+        }
+        render();
+    </script>
+</body>
+</html>
