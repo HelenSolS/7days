@@ -3,295 +3,457 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#1a1a2e">
+    <meta name="theme-color" content="#FDFBF7">
+    <meta name="format-detection" content="telephone=no">
     <title>Марафон Осознанности | 7 дней к себе</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@600;700&family=Nunito:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        /* ============================================
+           ТЁПЛАЯ ПАЛИТРА (психологически безопасная)
+           ============================================ */
+        :root {
+            --bg-page: #FDFBF7;           /* Тёплая рисовая бумага */
+            --bg-card: #FFFFFF;           /* Чистый белый для карточек */
+            --bg-input: #F5F2EB;          /* Светлый беж для поля ввода */
+            --text-primary: #4A4A4A;      /* Тёплый серый (не чёрный) */
+            --text-secondary: #8C857B;    /* Светлый серый для подписей */
+            --accent-green: #8FBC8F;      /* Шалфейно-зелёный (успокаивает) */
+            --accent-rose: #E6C2BF;       /* Приглушённый розовый */
+            --accent-terracotta: #F4D0A4; /* Мягкая терракотовый */
+            --shadow-soft: 0 8px 32px rgba(143, 188, 143, 0.12);
+            --shadow-hover: 0 12px 40px rgba(143, 188, 143, 0.18);
+            --radius-card: 28px;
+            --radius-button: 20px;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100%; }
+
         body {
-            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            color: #ffffff;
-            min-height: 100vh;
-            line-height: 1.6;
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-primary);
+            line-height: 1.7;
+            font-size: 17px;
             -webkit-font-smoothing: antialiased;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
         }
+
         .container {
-            max-width: 520px;
+            max-width: 480px;
             margin: 0 auto;
-            padding: 20px 16px 40px;
+            padding: 24px 20px 60px;
         }
+
+        /* ============================================
+           ЗАГОЛОВКИ И ТИПОГРАФИКА
+           ============================================ */
         .header {
             text-align: center;
-            margin-bottom: 24px;
-            animation: fadeInDown 0.6s ease;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid rgba(140, 133, 123, 0.15);
         }
+
         .header h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 26px;
+            font-family: 'Merriweather', serif;
+            font-size: 24px;
             font-weight: 700;
-            margin-bottom: 8px;
-            background: linear-gradient(135deg, #e94560, #ff6b6b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            letter-spacing: -0.3px;
         }
+
         .header p {
-            color: rgba(255,255,255,0.7);
-            font-size: 14px;
+            font-size: 15px;
+            color: var(--text-secondary);
         }
+
+        /* ============================================
+           ПРОГРЕСС
+           ============================================ */
         .progress-section {
-            margin-bottom: 24px;
+            margin-bottom: 32px;
         }
+
         .progress-info {
             display: flex;
             justify-content: space-between;
-            font-size: 12px;
-            color: rgba(255,255,255,0.6);
-            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
         }
+
         .progress-bar {
-            background: rgba(255,255,255,0.1);
-            height: 8px;
-            border-radius: 4px;
+            background: rgba(140, 133, 123, 0.15);
+            height: 10px;
+            border-radius: 5px;
             overflow: hidden;
         }
+
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #e94560, #ff6b6b);
-            border-radius: 4px;
-            transition: width 0.5s ease;
+            background: linear-gradient(90deg, var(--accent-green), #A8C9A8);
+            border-radius: 5px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
+        /* ============================================
+           БЕЙДЖ ДНЯ
+           ============================================ */
         .day-badge {
             display: inline-block;
-            background: rgba(233, 69, 96, 0.15);
-            border: 1px solid rgba(233, 69, 96, 0.3);
-            padding: 6px 16px;
+            background: var(--accent-rose);
+            background: linear-gradient(135deg, var(--accent-rose), #F0D4D2);
+            padding: 8px 20px;
             border-radius: 20px;
-            font-size: 13px;
-            color: #e94560;
-            margin-bottom: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 28px;
         }
-        .card {
-            background: rgba(255, 255, 255, 0.06);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 24px;
-            margin-bottom: 16px;
-            animation: fadeInUp 0.5s ease;
-        }
-        .card h2 {
-            font-family: 'Playfair Display', serif;
-            font-size: 22px;
-            margin-bottom: 16px;
-            color: #fff;
-        }
-        .card p {
-            color: rgba(255, 255, 255, 0.85);
-            margin-bottom: 12px;
-            font-size: 15px;
-        }
-        .card strong {
-            color: #ff6b6b;
-        }
+
+        /* ============================================
+           МЕДИА КОНТЕЙНЕР (картинки и видео)
+           ============================================ */
         .media-container {
             width: 100%;
-            margin: 16px 0;
-            border-radius: 16px;
+            margin: 0 0 32px 0;
+            border-radius: var(--radius-card);
             overflow: hidden;
+            background: var(--bg-input);
+            position: relative;
         }
+
         .media-container img {
             width: 100%;
             height: auto;
             display: block;
         }
+
         .media-container iframe {
             width: 100%;
-            height: 220px;
+            height: 240px;
             border: none;
-            border-radius: 16px;
+            display: block;
         }
-        .practice-box {
-            background: linear-gradient(135deg, rgba(233, 69, 96, 0.1), rgba(15, 52, 96, 0.3));
-            border-radius: 16px;
-            padding: 20px;
-            margin-top: 20px;
+
+        /* ============================================
+           ОСНОВНЫЕ КАРТОЧКИ
+           ============================================ */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius-card);
+            padding: 28px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-soft);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .practice-box h3 {
-            color: #e94560;
-            font-size: 15px;
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card h2 {
+            font-family: 'Merriweather', serif;
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 18px;
+            line-height: 1.4;
+        }
+
+        .card p {
+            color: var(--text-primary);
             margin-bottom: 16px;
+        }
+
+        .card strong {
+            color: #6B5B4F;
+            font-weight: 600;
+        }
+
+        .card em {
+            color: var(--accent-green);
+            font-style: normal;
+        }
+
+        /* ============================================
+           БЛОК ПРАКТИКИ
+           ============================================ */
+        .practice-box {
+            background: linear-gradient(135deg, rgba(143, 188, 143, 0.08), rgba(230, 194, 191, 0.08));
+            border-radius: var(--radius-card);
+            padding: 24px;
+            margin-top: 24px;
+            border: 1px solid rgba(143, 188, 143, 0.15);
+        }
+
+        .practice-box h3 {
+            color: var(--accent-green);
+            font-family: 'Merriweather', serif;
+            font-size: 17px;
+            margin-bottom: 18px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
+
         .practice-box ol {
-            padding-left: 20px;
-            color: rgba(255, 255, 255, 0.8);
+            padding-left: 22px;
+            color: var(--text-primary);
         }
+
         .practice-box li {
-            margin-bottom: 12px;
-            font-size: 14px;
+            margin-bottom: 14px;
+            padding-left: 6px;
         }
+
+        .practice-box li:last-child {
+            margin-bottom: 0;
+        }
+
+        /* ============================================
+           ПОДСКАЗКА
+           ============================================ */
         .tip-box {
-            background: rgba(255,255,255,0.05);
-            border-left: 3px solid #e94560;
-            padding: 12px 16px;
-            margin-top: 16px;
-            border-radius: 0 12px 12px 0;
-            font-size: 13px;
-            color: rgba(255,255,255,0.7);
-        }
-        .science-note {
-            font-size: 12px;
-            color: rgba(255,255,255,0.4);
-            margin-top: 20px;
-            padding-top: 16px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            font-style: italic;
-        }
-        .feedback-section {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-        .feedback-section h3 {
+            background: var(--bg-input);
+            border-left: 4px solid var(--accent-terracotta);
+            padding: 16px 20px;
+            margin-top: 18px;
+            border-radius: 0 16px 16px 0;
             font-size: 15px;
-            margin-bottom: 12px;
+            color: var(--text-secondary);
         }
+
+        .tip-box::before {
+            content: '💡';
+            margin-right: 8px;
+        }
+
+        /* ============================================
+           НАУЧНАЯ ССЫЛКА
+           ============================================ */
+        .science-note {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(140, 133, 123, 0.12);
+            font-style: italic;
+            line-height: 1.6;
+        }
+
+        /* ============================================
+           БЛОК ОТВЕТА
+           ============================================ */
+        .feedback-section {
+            background: var(--bg-card);
+            border: 1px solid rgba(140, 133, 123, 0.1);
+            border-radius: var(--radius-card);
+            padding: 24px;
+            margin-top: 28px;
+        }
+
+        .feedback-section h3 {
+            font-family: 'Merriweather', serif;
+            font-size: 17px;
+            margin-bottom: 14px;
+            color: var(--text-primary);
+        }
+
         .feedback-textarea {
             width: 100%;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            padding: 14px;
-            color: white;
+            background: var(--bg-input);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 18px;
+            color: var(--text-primary);
             font-family: inherit;
-            font-size: 14px;
+            font-size: 16px;
+            line-height: 1.6;
             resize: vertical;
-            min-height: 80px;
-            margin-bottom: 12px;
+            min-height: 100px;
+            margin-bottom: 14px;
+            transition: border-color 0.3s ease, background 0.3s ease;
         }
+
+        .feedback-textarea:focus {
+            outline: none;
+            border-color: var(--accent-green);
+            background: #FAF8F4;
+        }
+
         .feedback-textarea::placeholder {
-            color: rgba(255,255,255,0.4);
+            color: #B5AFA8;
         }
+
+        /* ============================================
+           КНОПКИ
+           ============================================ */
         .btn {
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
             width: 100%;
-            padding: 16px 24px;
-            background: linear-gradient(135deg, #e94560, #ff6b6b);
+            padding: 18px 28px;
+            background: linear-gradient(135deg, var(--accent-green), #7DAA7D);
             border: none;
-            border-radius: 14px;
+            border-radius: var(--radius-button);
             color: white;
-            font-size: 15px;
+            font-family: 'Merriweather', serif;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 16px rgba(143, 188, 143, 0.3);
         }
+
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(233, 69, 96, 0.35);
+            box-shadow: 0 8px 24px rgba(143, 188, 143, 0.4);
         }
+
         .btn:active {
             transform: scale(0.98);
         }
+
         .btn-completed {
-            background: linear-gradient(135deg, #00b894, #00cec9);
+            background: linear-gradient(135deg, #A8C9A8, #8FBC8F);
+            box-shadow: none;
         }
+
+        /* ============================================
+           НАВИГАЦИЯ
+           ============================================ */
         .nav-buttons {
             display: flex;
-            gap: 10px;
-            margin-top: 20px;
+            gap: 12px;
+            margin-top: 28px;
         }
+
         .nav-btn {
             flex: 1;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            color: white;
-            font-size: 14px;
+            padding: 14px;
+            background: var(--bg-card);
+            border: 2px solid rgba(140, 133, 123, 0.15);
+            border-radius: 16px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
         }
+
         .nav-btn:hover:not(:disabled) {
-            background: rgba(233, 69, 96, 0.2);
+            background: rgba(143, 188, 143, 0.1);
+            border-color: var(--accent-green);
         }
+
         .nav-btn:disabled {
-            opacity: 0.3;
+            opacity: 0.4;
             cursor: not-allowed;
         }
-        .welcome-screen {
-            text-align: center;
-            padding: 40px 20px;
-        }
-        .welcome-screen h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 32px;
-            margin-bottom: 16px;
-            background: linear-gradient(135deg, #e94560, #ff6b6b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .welcome-screen p {
-            color: rgba(255,255,255,0.7);
-            font-size: 16px;
-            margin-bottom: 30px;
-        }
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+
+        /* ============================================
+           ЭКРАН ЗАГРУЗКИ
+           ============================================ */
         .loading {
-            text-align: center;
-            padding: 60px 20px;
-            color: rgba(255,255,255,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            color: var(--text-secondary);
         }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255,255,255,0.1);
-            border-top-color: #e94560;
+
+        .loading-spinner {
+            width: 44px;
+            height: 44px;
+            border: 3px solid rgba(140, 133, 123, 0.15);
+            border-top-color: var(--accent-green);
             border-radius: 50%;
-            margin: 0 auto 16px;
+            margin-bottom: 16px;
             animation: spin 1s linear infinite;
         }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+
+        /* ============================================
+           АНИМАЦИИ ПОЯВЛЕНИЯ
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card, .media-container, .feedback-section, .nav-buttons {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        /* ============================================
+           СТАТУС ЗАВЕРШЕНИЯ
+           ============================================ */
+        .completed-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(143, 188, 143, 0.15);
+            color: var(--accent-green);
+            padding: 10px 20px;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .completed-badge::before {
+            content: '✓';
+            font-size: 16px;
+        }
+
+        /* ============================================
+           АДАПТАЦИЯ ПОД ТЕЛЕФОН
+           ============================================ */
+        @media (max-width: 380px) {
+            .container { padding: 20px 16px 50px; }
+            .card { padding: 22px; }
+            .card h2 { font-size: 20px; }
+            .btn { padding: 16px 24px; font-size: 15px; }
         }
     </style>
 </head>
 <body>
     <div class="container" id="app">
         <div class="loading">
-            <div class="spinner"></div>
-            <p>Загрузка марафона...</p>
+            <div class="loading-spinner"></div>
+            <p>Открываем дневник...</p>
         </div>
     </div>
 
     <script>
         // ============================================
-        // КОНФИГУРАЦИЯ (заполните своими данными)
+        // КОНФИГУРАЦИЯ
         // ============================================
         
-        // URL вашего n8n webhook (создадите в n8n)
+        // URL webhook из n8n (создадите в n8n)
         const WEBHOOK_URL = 'https://ВАШ_ДОМЕН.n8n.cloud/webhook/marathon-response';
         
-        // Ссылки на медиа (заполните когда будут готовы)
-        // Для видео используйте embed ссылки YouTube
+        // Ссылки на медиа (заполните)
+        // Для YouTube: https://www.youtube.com/embed/VIDEO_ID
         const MEDIA = {
             day1: { image: '', video: '' },
             day2: { image: '', video: '' },
@@ -348,14 +510,14 @@
                     ],
                     tip: "Результат: мозг «увидит» еду и вовремя даст сигнал сытости."
                 },
-                science: "Феномен «сенсорно-специфического насыщения» (sensory-specific satiety) объясняет, почему разнообразие вкусов приводит к перееданию. Наш мозг адаптируется к постоянному стимулу и перестаёт его регистрировать (Rolls, Psychological Bulletin, 1986).",
+                science: "Феномен «сенсорно-специфического насыщения» (sensory-specific satiety) объясняет, почему разнообразие вкусов приводит к перееданию (Rolls, Psychological Bulletin, 1986).",
                 question: "Какое открытие ты сегодня сделала о своём вкусе?"
             },
             3: {
                 title: "Чей это голос?",
                 subtitle: "День 3: Голод или Эмоция?",
                 hook: "Ты не голодна — тебе грустно. Или одиноко. Или скучно. Эмоциональный голод — это попытка заполнить пустоту внутри едой.",
-                content: `Физический голод нарастает постепенно, появляется в желудке, исчезает после еды. Эмоциональный голод приходит внезапно, как волна, и требует конкретной еды (часто сладкой или жирной). После эмоционального переедания вы чувствуете вину, а не удовлетворение. Ключевое отличие: эмоциональный голод не прекращается после насыщения.`,
+                content: `Физический голод нарастает постепенно, появляется в желудке, исчезает после еды. Эмоциональный голод приходит внезапно, как волна, и требует конкретной еды (часто сладкой или жирной). После эмоционального переедания вы чувствуете вину, а не удовлетворение.`,
                 examples: [
                     "📍 <strong>Голод в горле</strong>. Когда хочется «что-то», но не можешь определить что — это не тело, это эмоция.",
                     "🎭 <strong>Триггеры</strong>. Скука, одиночество, стресс, усталость — знакомые враги?"
@@ -370,7 +532,7 @@
                     ],
                     tip: "Исследования показывают: даже 5-минутная пауза перед едой снижает количество съеденного на 30%."
                 },
-                science: "Mindful Eating снижает переедание и увеличивает удовольствие от еды. Исследования Alvinczi et al. (Appetite, 2018) подтверждают эффективность практик осознанного питания.",
+                science: "Mindful Eating снижает переедание и увеличивает удовольствие от еды (Alvinczi et al., Appetite, 2018).",
                 question: "После какой эмоции ты чаще всего тянется к холодильнику?"
             },
             4: {
@@ -391,7 +553,7 @@
                     ],
                     tip: "Результат: сброс адреналина и переключение нервной системы в режим покоя."
                 },
-                science: "Техника «shaking» (тряска) помогает завершить цикл стресс-реакции и активировать парасимпатическую нервную систему. Исследования Эмили Нагоски подтверждают эффективность физического сброса напряжения (Nagoski, «Come As You Are», 2015).",
+                science: "Техника «shaking» помогает завершить цикл стресс-реакции и активировать парасимпатическую нервную систему (Nagoski, «Come As You Are», 2015).",
                 question: "Почувствовала ли ты лёгкость после тряски? Какое ощущение в мышцах было самым ярким?"
             },
             5: {
@@ -401,7 +563,7 @@
                 content: `В твоём кишечнике живут миллиарды жителей. Патогенные грибы (кандида) и определённые бактерии питаются только сахаром. Когда ты кормишь их фастфудом и булками, они размножаются и начинают выделять вещества, которые напрямую влияют на твой мозг. Они буквально «нашёпывают» тебе: «Съешь ещё сахара». Твоя тяга к сладкому — это не ты, это крик голодных бактерий, которые захватили пульт управления.`,
                 examples: [
                     "🧬 <strong>Химический шантаж</strong>. Твоя рука тянется за сладким — но это не твоя воля, это бактерии.",
-                    "📉 <strong>Сахарный туман</strong>. Избыток сахара вызывает скачки глюкозы, за которыми следует упадок сил и «когнитивная тупость»."
+                    "📉 <strong>Сахарный туман</strong>. Избыток сахара вызывает скачки глюкозы, за которыми следует упадок сил."
                 ],
                 conclusion: "Мы не будем бороться с собой. Мы будем менять состав своего «внутреннего города». Мы покормим своих защитников и оставим на голодном пайке тех, кто делает нас слабыми.",
                 practice: {
@@ -412,14 +574,14 @@
                     ],
                     tip: "Твоя задача — оставить паразитов на голодном пайке и снабдить ресурсами своих защитников."
                 },
-                science: "Ось «кишечник-мозг» (Gut-Brain Axis) подтверждает, что состав микробиома влияет на пищевое поведение и тягу к определённым продуктам. Исследования Cryan & Dinan (Nature Reviews Neuroscience, 2012).",
-                question: "Удалось ли тебе сегодня обхитрить «тайных жителей»? Какое чувство было сильнее: привычка или осознанность?"
+                science: "Ось «кишечник-мозг» (Gut-Brain Axis) подтверждает, что состав микробиома влияет на пищевое поведение (Cryan & Dinan, Nature Reviews Neuroscience, 2012).",
+                question: "Удалось ли тебе сегодня обхитрить «тайных жителей»?"
             },
             6: {
                 title: "Сон — главная перезагрузка",
                 subtitle: "День 6: Почему вечерний жор убивает твоё завтра",
-                hook: "Ты спала 8 часов, но встала разбитой, с тяжёлой головой и мешками под глазами? Это «пищевое похмелье». Твоё тело всю ночь работало, а не отдыхало.",
-                content: `Сон — это время, когда мозг проводит «генеральную уборку», а тело выделяет гормон роста для восстановления тканей. Но если ты наелась на ночь, вся кровь уходит в ЖКТ. Ремонта не будет. Поздний ужин нарушает работу желчного пузыря. Вместо того чтобы очищать организм, он копит токсины. Результат — горечь во рту и отсутствие сил утром.`,
+                hook: "Ты спала 8 часов, но встала разбитой, с тяжёлой головой? Это «пищевое похмелье». Твоё тело всю ночь работало, а не отдыхало.",
+                content: `Сон — это время, когда мозг проводит «генеральную уборку», а тело выделяет гормон роста для восстановления тканей. Но если ты наелась на ночь, вся кровь уходит в ЖКТ. Ремонта не будет. Поздний ужин нарушает работу желчного пузыря. Вместо того чтобы очищать организм, он копит токсины.`,
                 examples: [
                     "🌙 <strong>Ночная стройка</strong>. После 20:00 пищеварительная система должна отдыхать, а не работать сверхурочно.",
                     "📵 <strong>Синий свет</strong>. Экран телефона — это сигнал мозгу: «Солнце взошло, не спи!»"
@@ -433,17 +595,17 @@
                     ],
                     tip: "Твой биокомпьютер скажет тебе спасибо завтра утром."
                 },
-                science: "Исследования Harvard Medical School показали, что недостаток сна снижает уровень лептина (гормона сытости) и повышает грелин (гормона голода), что приводит к перееданию на следующий день (Spiegel et al., Annals of Internal Medicine, 2004).",
-                question: "Во сколько был твой последний приём пищи? Как ты планируешь провести час перед сном без телефона?"
+                science: "Недостаток сна нарушает баланс лептина и грелина, что приводит к перееданию (Spiegel et al., Annals of Internal Medicine, 2004).",
+                question: "Во сколько был твой последний приём пищи? Как ты планируешь провести час перед сном?"
             },
             7: {
                 title: "Новая Я",
                 subtitle: "День 7: Свидание длиною в жизнь",
                 hook: "Поздравляю! За эти 7 дней ты сделала то, что многие не делают годами: ты спустилась из своей головы в свой дом.",
-                content: `Ты научилась слышать шёпот своего тела прежде, чем оно перейдёт на крик боли. Ты больше не «голова на палочке». Ты — цельная. Сила воли — это ограниченный ресурс, она всегда заканчивается. Осознанность — это навык. Ты теперь просто ЗНАЕШЬ, что происходит внутри, и тебе не нужно себя заставлять. Ты выбираешь себя, потому что чувствуешь, как тебе от этого хорошо.`,
+                content: `Ты научилась слышать шёпот своего тела прежде, чем оно перейдёт на крик боли. Ты больше не «голова на палочке». Ты — цельная. Сила воли — ограниченный ресурс, она всегда заканчивается. Осознанность — это навык. Ты теперь просто ЗНАЕШЬ, что происходит внутри, и тебе не нужно себя заставлять.`,
                 examples: [
-                    "🌱 <strong>Минимализм</strong>. Тебе не нужно 100 новых привычек. Оставь одну. Тёплая вода утром или «пауза 10 секунд» перед едой. Один стабильный шаг лучше, чем сто прыжков на месте.",
-                    "🎯 <strong>Контракт с собой</strong>. Выпиши одну привычку из марафона, которую ты обязуешься оставить в своей жизни на ближайший месяц. Только одну. Но железно."
+                    "🌱 <strong>Минимализм</strong>. Тебе не нужно 100 новых привычек. Оставь одну. Тёплая вода утром или «пауза 10 секунд» перед едой.",
+                    "🎯 <strong>Контракт с собой</strong>. Выпиши одну привычку из марафона, которую ты обязуешься оставить в своей жизни на ближайший месяц."
                 ],
                 conclusion: "Наш марафон заканчивается, но твой роман с собой — только начинается. Не дай системе снова затянуть тебя в сон. Продолжай дышать, продолжай чувствовать, продолжай выбирать Жизнь.",
                 practice: {
@@ -455,7 +617,7 @@
                     ],
                     tip: "Один стабильный шаг лучше, чем сто прыжков на месте."
                 },
-                science: "Исследования формирования привычек показывают, что для закрепления новой привычки требуется от 18 до 254 дней в зависимости от её сложности (Lally et al., European Journal of Social Psychology, 2010).",
+                science: "Для закрепления новой привычки требуется от 18 до 254 дней (Lally et al., European Journal of Social Psychology, 2010).",
                 question: "Какой главный инсайт ты забираешь с собой? Какая ты теперь?"
             }
         };
@@ -503,7 +665,6 @@
                     completedDays = data.completedDays || [];
                 }
             } catch (e) {
-                console.error('Progress load error:', e);
                 completedDays = [];
             }
         }
@@ -513,9 +674,7 @@
                 localStorage.setItem('marathonProgress', JSON.stringify({
                     completedDays: completedDays
                 }));
-            } catch (e) {
-                console.error('Progress save error:', e);
-            }
+            } catch (e) {}
         }
 
         function render() {
@@ -552,15 +711,14 @@
                 </div>
 
                 <div class="day-badge">${day.subtitle}</div>
-
                 ${mediaHtml}
 
                 <div class="card">
                     <h2>${day.title}</h2>
                     <p><strong>${day.hook}</strong></p>
                     <p>${day.content}</p>
-                    ${day.examples.map(ex => `<p style="margin-top: 12px">${ex}</p>`).join('')}
-                    <p style="margin-top: 16px; color: #ff6b6b;"><em>${day.conclusion}</em></p>
+                    ${day.examples.map(ex => `<p style="margin-top: 14px">${ex}</p>`).join('')}
+                    <p style="margin-top: 18px"><em>${day.conclusion}</em></p>
                 </div>
 
                 <div class="practice-box">
@@ -568,7 +726,7 @@
                     <ol>
                         ${day.practice.steps.map(step => `<li>${step}</li>`).join('')}
                     </ol>
-                    <div class="tip-box">💡 ${day.practice.tip}</div>
+                    <div class="tip-box">${day.practice.tip}</div>
                 </div>
 
                 <div class="science-note">${day.science}</div>
@@ -576,13 +734,15 @@
                 ${!isCompleted ? `
                     <div class="feedback-section">
                         <h3>${day.question}</h3>
-                        <textarea class="feedback-textarea" id="responseText" placeholder="Напиши свой ответ здесь..."></textarea>
-                        <button class="btn" onclick="completeDay()">✅ Я выполнила задание дня ${currentDay}</button>
+                        <textarea class="feedback-textarea" id="responseText" placeholder="Напиши свой ответ здесь, в своём темпе..."></textarea>
+                        <button class="btn" onclick="completeDay()">
+                            <span>✓</span> Я выполнила задание дня ${currentDay}
+                        </button>
                     </div>
                 ` : `
                     <div class="feedback-section" style="text-align: center;">
-                        <h3 style="color: #00b894;">✓ День ${currentDay} завершён</h3>
-                        <p style="font-size: 14px; color: rgba(255,255,255,0.7);">Продолжай в том же духе!</p>
+                        <div class="completed-badge">День ${currentDay} завершён</div>
+                        <p style="margin-top: 16px; color: var(--text-secondary); font-size: 15px;">Продолжай в том же духе!</p>
                     </div>
                 `}
 
@@ -629,12 +789,10 @@
                                 timestamp: new Date().toISOString()
                             })
                         });
-                    } catch (e) {
-                        console.log('Webhook error:', e);
-                    }
+                    } catch (e) {}
                 }
 
-                alert(`День ${currentDay} завершён! 🌟`);
+                alert(`День ${currentDay} завершён! 🌿`);
                 render();
             }
         }
