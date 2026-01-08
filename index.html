@@ -1,713 +1,337 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>7 дней для себя</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: #333;
-        }
+import React, { useState, useEffect, useMemo } from 'react';
+import { MARATHON_DAYS } from './constants';
+import { UserProgress } from './types';
+import { 
+  CheckCircle2, Sparkles, Video, Zap, Target, Loader2,
+  Moon, Sun, Coffee, MessageCircle, ArrowRight, ChevronLeft, Info
+} from 'lucide-react';
 
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-        }
+const WEBHOOK_URL = 'https://helensols.hooks.n8n.cloud/marathon-report'; 
 
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
+const App: React.FC = () => {
+  const [currentDayId, setCurrentDayId] = useState<number>(1);
+  const [currentPart, setCurrentPart] = useState<number>(0); 
+  const [loading, setLoading] = useState(false);
+  const [answerText, setAnswerText] = useState("");
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
-        .day-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 50px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            font-size: 14px;
-        }
+  const [progress, setProgress] = useState<UserProgress>(() => {
+    const saved = localStorage.getItem('marathon_state_v6');
+    return saved ? JSON.parse(saved) : { completedDays: [], currentDay: 1, lastVisit: new Date().toISOString(), answers: {} };
+  });
 
-        h1 {
-            font-size: 28px;
-            color: #333;
-            margin-bottom: 10px;
-        }
+  const tg = window.Telegram?.WebApp;
 
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #e0e0e0;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-bottom: 30px;
-        }
+  useEffect(() => {
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      if (tg.setHeaderColor) tg.setHeaderColor('secondary_bg_color');
+    }
 
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            transition: width 0.3s ease;
-        }
+    // Определяем день: либо из URL (?day=X), либо первый незавершенный
+    const params = new URLSearchParams(window.location.search);
+    const dayParam = params.get('day');
+    
+    if (dayParam) {
+      const dId = parseInt(dayParam, 10);
+      if (!isNaN(dId) && dId >= 1 && dId <= 7) {
+        setCurrentDayId(dId);
+      }
+    } else {
+      const firstUnfinished = MARATHON_DAYS.find(d => !progress.completedDays.includes(d.id));
+      if (firstUnfinished) setCurrentDayId(firstUnfinished.id);
+    }
+  }, []);
 
-        .content-section {
-            margin-bottom: 30px;
-        }
+  const currentDay = useMemo(() => 
+    MARATHON_DAYS.find(d => d.id === currentDayId) || MARATHON_DAYS[0]
+  , [currentDayId]);
 
-        .part-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #f0f0f0;
-        }
+  const isDayFinished = progress.completedDays.includes(currentDayId);
 
-        .hook {
-            background: #f9f9f9;
-            padding: 15px;
-            border-left: 4px solid #667eea;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-style: italic;
-            color: #555;
-        }
+  const handleNextPart = () => {
+    if (currentPart < 2) {
+      setCurrentPart(currentPart + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      tg?.HapticFeedback?.selectionChanged();
+    }
+  };
 
-        .content-text {
-            line-height: 1.6;
-            color: #555;
-            margin-bottom: 15px;
-        }
+  const handlePrevPart = () => {
+    if (currentPart > 0) setCurrentPart(currentPart - 1);
+  };
 
-        .examples {
-            background: #f0f4ff;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-        }
+  const handleCompleteDay = async () => {
+    if (currentPart === 2 && !selectedOption && currentDay.interactive.type !== 'breath') {
+      tg?.showAlert?.("Пожалуйста, выберите вариант ответа.");
+      return;
+    }
 
-        .example-item {
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #e0e0ff;
-        }
+    setLoading(true);
+    const user = tg?.initDataUnsafe?.user;
+    
+    const payload = {
+      user_id: user?.id,
+      fio: user ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Аноним',
+      username: user?.username || 'unknown',
+      day: currentDayId,
+      topic: currentDay.topic,
+      choice: selectedOption,
+      note: answerText,
+      timestamp: new Date().toISOString()
+    };
 
-        .example-item:last-child {
-            margin-bottom: 0;
-            border-bottom: none;
-        }
+    try {
+      // Пытаемся отправить на вебхук
+      await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
-        .practice-box {
-            background: #fff3cd;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-        }
+      const newProgress = {
+        ...progress,
+        completedDays: [...new Set([...progress.completedDays, currentDayId])],
+        answers: { ...progress.answers, [currentDayId]: { note: answerText, choice: selectedOption } }
+      };
+      
+      setProgress(newProgress);
+      localStorage.setItem('marathon_state_v6', JSON.stringify(newProgress));
+      tg?.HapticFeedback?.notificationOccurred('success');
+    } catch (e) {
+      console.error('Webhook failed, saving locally:', e);
+      const newProgress = {
+        ...progress,
+        completedDays: [...new Set([...progress.completedDays, currentDayId])]
+      };
+      setProgress(newProgress);
+      localStorage.setItem('marathon_state_v6', JSON.stringify(newProgress));
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        .practice-title {
-            font-weight: bold;
-            color: #856404;
-            margin-bottom: 10px;
-        }
+  if (isDayFinished) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-[#FAF6F1] animate-fade-in">
+        <div className="w-24 h-24 bg-white rounded-[2.5rem] shadow-xl flex items-center justify-center mb-10 border border-gray-100">
+          <Sparkles className="text-[#8FBC8F] w-12 h-12" />
+        </div>
+        <h2 className="text-3xl font-bold mb-4 font-lora">День пройден!</h2>
+        <p className="text-gray-500 mb-12 text-sm leading-relaxed max-w-[280px]">
+          Твое тело услышано. <br/>Инсайты сохранены. Завтра в 09:15 бот пришлет новую миссию.
+        </p>
+        <button 
+          onClick={() => tg?.close()} 
+          className="px-12 py-5 bg-white border border-gray-200 rounded-full text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 active:scale-95 transition-all shadow-sm"
+        >
+          Закрыть дневник
+        </button>
+      </div>
+    );
+  }
 
-        .practice-steps {
-            list-style: none;
-            counter-reset: step-counter;
-        }
+  return (
+    <div className="max-w-md mx-auto min-h-screen bg-[#FAF6F1] pb-20">
+      {/* HEADER WITH IMAGE */}
+      <div className="relative aspect-[4/3] overflow-hidden rounded-b-[4rem] shadow-2xl">
+        <img src={currentDay.image} className="w-full h-full object-cover transition-transform duration-[3s] hover:scale-110" alt="" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+        
+        <div className="absolute top-12 left-6 right-6 flex justify-between items-center">
+          {currentPart > 0 ? (
+            <button onClick={handlePrevPart} className="p-3 glass rounded-2xl text-white active:scale-90 transition-all">
+              <ChevronLeft size={20}/>
+            </button>
+          ) : <div className="w-10"/>}
+          <div className="bg-white/95 px-6 py-2.5 rounded-full shadow-lg flex items-center gap-3 border border-white/50">
+             {currentPart === 0 ? <Sun size={18} className="text-orange-400"/> : currentPart === 1 ? <Coffee size={18} className="text-amber-800"/> : <Moon size={18} className="text-indigo-600"/>}
+             <span className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-800">
+               {currentPart === 0 ? 'Утро' : currentPart === 1 ? 'День' : 'Вечер'}
+             </span>
+          </div>
+          <div className="w-10"/>
+        </div>
 
-        .practice-steps li {
-            counter-increment: step-counter;
-            margin-bottom: 8px;
-            color: #555;
-            padding-left: 25px;
-            position: relative;
-        }
+        <div className="absolute bottom-12 left-10 right-10 text-white animate-fade-in">
+          <div className="flex items-center gap-2 opacity-60 mb-3">
+            <Target size={14} className="text-[#8FBC8F]" />
+            <span className="text-[10px] font-black uppercase tracking-[0.3em]">{currentDay.title}</span>
+          </div>
+          <h1 className="text-3xl font-bold font-lora leading-tight">{currentDay.topic}</h1>
+        </div>
+      </div>
 
-        .practice-steps li:before {
-            content: counter(step-counter);
-            position: absolute;
-            left: 0;
-            background: #ffc107;
-            color: white;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-        }
+      <div className="px-6 mt-10 space-y-10">
+        {/* PART 0: THEORY / VIDEO SCENARIO */}
+        {currentPart === 0 && (
+          <div className="space-y-8 animate-fade-in">
+            <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-gray-100/50">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-2 bg-[#F0F7F0] rounded-xl">
+                  <Video size={20} className="text-[#8FBC8F]" />
+                </div>
+                <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400">Сценарий дня</h3>
+              </div>
+              
+              <p className="text-xl font-lora italic leading-relaxed text-gray-800 mb-10 border-l-[5px] border-[#E6C2BF] pl-6">
+                "{currentDay.videoScenario.hook}"
+              </p>
 
-        .tip {
-            background: #d4edda;
-            color: #155724;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-top: 10px;
-            font-size: 14px;
-            border-left: 4px solid #28a745;
-        }
+              <div className="space-y-5">
+                {currentDay.videoScenario.examples.map((ex, i) => (
+                  <div key={i} className="flex gap-5 p-6 bg-[#FAF9F7] rounded-[2rem] border border-gray-50 transition-all hover:bg-white hover:shadow-md group">
+                    <span className="text-3xl grayscale group-hover:grayscale-0 transition-all">{ex.icon}</span>
+                    <div>
+                      <h4 className="font-bold text-sm text-gray-900 mb-1.5">{ex.title}</h4>
+                      <p className="text-[13px] text-gray-500 leading-relaxed font-medium">{ex.text}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-        .science-box {
-            background: #e7f3ff;
-            color: #004085;
-            padding: 12px;
-            border-radius: 8px;
-            border-left: 4px solid #0066cc;
-            font-size: 14px;
-            margin-top: 15px;
-        }
+              <button 
+                onClick={handleNextPart} 
+                className="w-full mt-12 py-6 bg-[#8FBC8F] text-white rounded-[2.5rem] font-black text-[12px] uppercase tracking-[0.25em] flex items-center justify-center gap-4 active:scale-95 transition-all shadow-xl shadow-green-100"
+              >
+                К практике дня <ArrowRight size={20}/>
+              </button>
+            </div>
+          </div>
+        )}
 
-        .form-section {
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 2px solid #f0f0f0;
-        }
+        {/* PART 1: PRACTICE */}
+        {currentPart === 1 && (
+          <div className="space-y-8 animate-fade-in">
+            <div className="bg-[#8FBC8F] rounded-[3.5rem] p-10 text-white shadow-2xl shadow-green-100 relative overflow-hidden">
+               <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
+               <div className="flex items-center gap-4 mb-10 opacity-70">
+                 <Zap size={22} className="fill-white"/>
+                 <h2 className="text-[11px] font-black uppercase tracking-[0.3em]">Инструкция Агента</h2>
+               </div>
+               
+               <h3 className="text-2xl font-bold mb-10 font-lora leading-tight">{currentDay.practice.title}</h3>
+               
+               <div className="space-y-10">
+                 {currentDay.practice.steps.map((step, i) => (
+                   <div key={i} className="flex gap-6">
+                     <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-[13px] font-black shrink-0 border border-white/30 backdrop-blur-md">
+                       {i + 1}
+                     </div>
+                     <div className="pt-1">
+                       <h4 className="font-black text-[13px] uppercase tracking-wider mb-2">{step.title}</h4>
+                       <p className="text-[15px] opacity-90 leading-relaxed font-medium">{step.text}</p>
+                     </div>
+                   </div>
+                 ))}
+               </div>
 
-        .question {
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 15px;
-            font-size: 16px;
-        }
+               <div className="mt-12 p-6 bg-white/10 rounded-[2rem] border border-white/10 flex items-start gap-5">
+                 <Info size={24} className="opacity-60 shrink-0 mt-1" />
+                 <p className="text-[13px] font-bold italic opacity-90 leading-relaxed">"{currentDay.practice.result}"</p>
+               </div>
 
-        textarea {
-            width: 100%;
-            min-height: 100px;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-family: inherit;
-            font-size: 14px;
-            resize: vertical;
-            margin-bottom: 15px;
-            transition: border-color 0.3s;
-        }
+               <button 
+                onClick={handleNextPart} 
+                className="w-full mt-14 py-6 bg-white text-[#8FBC8F] rounded-[2.5rem] font-black text-[12px] uppercase tracking-[0.25em] flex items-center justify-center gap-4 active:scale-95 transition-all shadow-xl shadow-black/5"
+              >
+                К отчету дня <ArrowRight size={20}/>
+              </button>
+            </div>
+          </div>
+        )}
 
-        textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
+        {/* PART 2: INTERACTIVE / REFLECTION */}
+        {currentPart === 2 && (
+          <div className="space-y-8 animate-fade-in">
+            <div className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-100/50">
+              <div className="flex items-center gap-3 mb-10">
+                <MessageCircle size={18} className="text-[#E6C2BF]" />
+                <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-gray-300">Рефлексия</h3>
+              </div>
+              
+              <h3 className="text-2xl font-bold font-lora mb-12 text-gray-800 leading-tight">
+                {currentDay.interactive.question}
+              </h3>
+              
+              <div className="space-y-4 mb-12">
+                {currentDay.interactive.options?.map(opt => (
+                  <button 
+                    key={opt.value}
+                    onClick={() => { setSelectedOption(opt.value); tg?.HapticFeedback?.selectionChanged(); }}
+                    className={`w-full p-7 rounded-[2.5rem] border-2 transition-all duration-500 flex items-center gap-5 ${
+                      selectedOption === opt.value 
+                      ? 'border-[#8FBC8F] bg-[#F0F7F0] scale-[1.02] shadow-lg shadow-green-50' 
+                      : 'border-gray-50 bg-[#FAF9F7] hover:bg-white hover:border-gray-200'
+                    }`}
+                  >
+                    <span className="text-3xl grayscale-0">{opt.icon}</span>
+                    <span className={`text-[13px] font-black uppercase tracking-widest ${selectedOption === opt.value ? 'text-[#3D3D3D]' : 'text-gray-400'}`}>
+                      {opt.label}
+                    </span>
+                  </button>
+                ))}
 
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+                {currentDay.interactive.type === 'breath' && (
+                  <div className="py-14 flex flex-col items-center">
+                    <div className="w-40 h-40 rounded-full border-[12px] border-[#8FBC8F]/10 flex items-center justify-center relative">
+                      <div className="absolute inset-0 rounded-full border-[4px] border-[#8FBC8F] animate-breathe opacity-20" />
+                      <div className="w-28 h-28 bg-[#8FBC8F]/5 rounded-full flex items-center justify-center">
+                        <span className="text-[12px] text-[#8FBC8F] font-black uppercase tracking-widest animate-pulse">Дыши</span>
+                      </div>
+                    </div>
+                    <p className="mt-10 text-[12px] text-gray-400 text-center italic font-medium px-8 leading-relaxed">
+                      Следуй за пульсацией. Вдох носом, длинный выдох.
+                    </p>
+                  </div>
+                )}
+              </div>
 
-        button {
-            flex: 1;
-            padding: 14px;
-            border: none;
-            border-radius: 10px;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
+              <div className="space-y-4 mb-12">
+                <div className="flex items-center gap-3 px-4 opacity-40">
+                  <Sparkles size={16} className="text-[#8FBC8F]"/>
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em]">Твой инсайт</span>
+                </div>
+                <textarea 
+                  value={answerText}
+                  onChange={(e) => setAnswerText(e.target.value)}
+                  placeholder="Что сегодня подало голос в твоем теле?.."
+                  className="w-full p-8 bg-[#FAF9F7] rounded-[2.5rem] border-none focus:ring-[4px] focus:ring-[#8FBC8F]/10 min-h-[160px] text-[15px] text-gray-700 placeholder:text-gray-300 transition-all font-medium leading-relaxed"
+                />
+              </div>
 
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
+              <button 
+                onClick={handleCompleteDay} 
+                disabled={loading}
+                className="w-full py-7 bg-[#8FBC8F] text-white rounded-[2.5rem] font-black text-[13px] uppercase tracking-[0.3em] flex items-center justify-center gap-4 active:scale-95 transition-all shadow-2xl shadow-green-100"
+              >
+                {loading ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={22}/> Завершить миссию</>}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .btn-secondary {
-            background: #f0f0f0;
-            color: #666;
-        }
-
-        .btn-secondary:hover:not(:disabled) {
-            background: #e0e0e0;
-        }
-
-        .btn-secondary:disabled {
-            opacity: 0.5;
-        }
-
-        .success-msg {
-            background: #d4edda;
-            color: #155724;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            text-align: center;
-            display: none;
-        }
-
-        .completion-msg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-        }
-
-        .completion-msg h2 {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div id="app"></div>
+      {/* FOOTER PREVIEW */}
+      <div className="px-6 mt-16 mb-12">
+         <div className="bg-[#2B2D42] rounded-[3rem] p-10 text-white/95 space-y-8 shadow-2xl">
+            <div className="flex items-center gap-4 opacity-40">
+              <Info size={16} className="text-[#8FBC8F]"/>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em]">Завтра в 09:15</h4>
+            </div>
+            <p className="font-lora italic text-xl text-indigo-100 border-l-[3px] border-[#8FBC8F]/40 pl-8 py-2 leading-relaxed">
+              "{currentDay.botTimeline.morning.text}"
+            </p>
+            <div className="flex justify-between items-center opacity-30 pt-4 border-t border-white/5">
+               <span className="text-[10px] font-black uppercase tracking-widest">Day {currentDayId} / 7</span>
+               <Sparkles size={16} />
+            </div>
+         </div>
+      </div>
     </div>
+  );
+};
 
-    <script>
-        const marathonContent = {
-            1: {
-                subtitle: "День 1: Осознанность тела",
-                parts: {
-                    1: {
-                        title: "Где ты прячешься?",
-                        hook: "Ты когда-нибудь ловила себя на том, что закончила ужин — и не помнишь, как он прошёл?",
-                        content: "Твоё тело делало всё само. А ты — где была в это время? Мы живём на автопилоте. Мы не в теле — мы в голове. И теряем жизнь «по дороге».",
-                        examples: [
-                            "🍽 <strong>Еда как белый шум</strong>. Ты скроллишь ленту, отвечаешь на сообщения... и вдруг — тарелка пуста.",
-                            "🧍 <strong>Тело-предатель</strong>. Ты на встрече. Вроде спокойна. А внутри всё дрожит."
-                        ],
-                        practice: {
-                            title: "🛠 Упражнение «Тепло рук»",
-                            steps: [
-                                "Сложи ладони. Активно разотри их — почувствуй жар.",
-                                "Положи тёплые руки туда, где сейчас «живёт» напряжение.",
-                                "Закрой глаза. Просто побудь с этим теплом."
-                            ],
-                            tip: "Наш мозг доверяет прикосновению."
-                        }
-                    },
-                    2: {
-                        title: "Голова на палочке",
-                        content: "Мы относимся к телу как к подставке под голову. Работает — и ладно. Мы спрятались на чердаке разума и забыли, что настоящий дом — ниже.",
-                        examples: [
-                            "🧠 <strong>Голова на палочке</strong>. Ты едешь в метро, но не помнишь станций.",
-                            "💭 <strong>Вечное планирование</strong>. Ты ужинаешь, а думаешь о завтрашнем дне."
-                        ],
-                        tip: "Возвращение в тело — это когда ты замечаешь, что сыта — до того, как переела."
-                    },
-                    3: {
-                        title: "Вечерняя рефлексия",
-                        question: "Какое место в теле сегодня дало о себе знать?",
-                        science: "Исследования показывают, что осознанность телесных ощущений снижает уровень кортизола и улучшает регуляцию нервной системы."
-                    }
-                }
-            },
-            2: {
-                subtitle: "День 2: Вкус жизни",
-                parts: {
-                    1: {
-                        title: "Рецепторы и магия",
-                        hook: "К середине тарелки вкус будто тускнеет, и вы доедаете уже просто по привычке.",
-                        content: "Если мы не даём мозгу «картинку» вкуса, он будет требовать ещё и ещё, даже если желудок полон. Мы едим много не потому, что голодны, а потому что не успели почувствовать, что поели.",
-                        examples: [
-                            "🥗 <strong>Секрет очередности</strong>. Сначала клетчатка, потом белок.",
-                            "🍓 <strong>Три оттенка</strong>. Попробуй определить три разных вкуса."
-                        ],
-                        practice: {
-                            title: "🛠 Упражнение «Первые три укуса»",
-                            steps: [
-                                "Отложи телефон. Убери его из поля зрения.",
-                                "Первые три кусочка съешь с закрытыми глазами.",
-                                "Почувствуй текстуру языком."
-                            ],
-                            tip: "Результат: мозг вовремя даст сигнал сытости."
-                        }
-                    },
-                    2: {
-                        title: "Почему мы переедаем",
-                        content: "Современная еда слишком яркая, она оглушает наши чувства. Мы не замечаем вкуса — и не чувствуем насыщения.",
-                        examples: [
-                            "📺 <strong>Экран за едой</strong>. Ты не видишь, что ешь.",
-                            "🧂 <strong>Слишком солёно</strong>. Вкус заглушён приправами."
-                        ],
-                        tip: "Феномен «сенсорно-специфического насыщения» объясняет переедание."
-                    },
-                    3: {
-                        title: "Вечерняя рефлексия",
-                        question: "Какое открытие ты сегодня сделала о своём вкусе?",
-                        science: "Осознанное питание помогает лучше чувствовать сигналы голода и сытости."
-                    }
-                }
-            },
-            3: {
-                subtitle: "День 3: Голод или Эмоция?",
-                parts: {
-                    1: {
-                        title: "Чей это голос?",
-                        hook: "Ты не голодна — тебе грустно. Или одиноко. Или скучно.",
-                        content: "Физический голод нарастает постепенно, появляется в желудке, исчезает после еды. Эмоциональный голод приходит внезапно, как волна, и требует конкретной еды.",
-                        examples: [
-                            "📍 <strong>Голод в горле</strong>. Хочется «что-то», но не можешь определить что.",
-                            "🎭 <strong>Триггеры</strong>. Скука, одиночество, стресс, усталость."
-                        ],
-                        practice: {
-                            title: "🛠 Упражнение «Пауза 10 секунд»",
-                            steps: [
-                                "Когда потянуло за едой — остановись на 10 секунд.",
-                                "Спроси себя: «Что я на самом деле чувствую?»",
-                                "Если это не голод — что можно сделать иначе?"
-                            ],
-                            tip: "5-минутная пауза снижает количество съеденного на 30%."
-                        }
-                    },
-                    2: {
-                        title: "Различаем голоса",
-                        content: "Когда вы научитесь различать эти два голоса, вы обретёте свободу выбора. Физический голод — союзник. Эмоциональный — гость, которого можно не впускать.",
-                        examples: [
-                            "🫃 <strong>Физический</strong>. Нарастает медленно, в желудке.",
-                            "💔 <strong>Эмоциональный</strong>. Приходит внезапно, в груди или горле."
-                        ],
-                        tip: "После эмоционального переедания — вина, а не удовлетворение."
-                    },
-                    3: {
-                        title: "Вечерняя рефлексия",
-                        question: "После какой эмоции ты чаще всего тянется к холодильнику?",
-                        science: "Mindful Eating снижает переедание, связанное с эмоциями."
-                    }
-                }
-            },
-            4: {
-                subtitle: "День 4: Движение как ресурс",
-                parts: {
-                    1: {
-                        title: "Разморозка",
-                        hook: "Ты не ленивая — ты «замёрзшая». Стресс застрял в мышцах.",
-                        content: "Стресс — это программа «бей или беги». Если ты осталась сидеть на месте, стресс «замёрз» в мышцах. Ты чувствуешь упадок не потому, что сил нет, а потому что они тратятся на удержание напряжения.",
-                        examples: [
-                            "💪 <strong>Плечи-камень</strong>. Подними плечи к ушам и держи 5 секунд.",
-                            "🌬 <strong>Поверхностное дыхание</strong>. Ты дышишь только верхней частью груди?"
-                        ],
-                        practice: {
-                            title: "🛠 Упражнение «Тряска и Выдох»",
-                            steps: [
-                                "Тряси кистями, плечами, всем телом 1 минуту.",
-                                "Сделай глубокий вдох носом и длинный выдох ртом."
-                            ],
-                            tip: "Сброс адреналина и переключение в режим покоя."
-                        }
-                    },
-                    2: {
-                        title: "Где живёт стресс",
-                        content: "Движение сегодня — это про очищение системы от яда тревоги. Не спорт, не накачка — просто освобождение от того, что застряло.",
-                        examples: [
-                            "🧘 <strong>Растяжка</strong>. Не для красоты, а для освобождения.",
-                            "🚶 <strong>Прогулка</strong>. Без цели, без подсчёта шагов."
-                        ],
-                        tip: "Стресс, который не вышел через тело, оседает в мышцах."
-                    },
-                    3: {
-                        title: "Вечерняя рефлексия",
-                        question: "Почувствовала ли ты лёгкость после движения?",
-                        science: "Техника «shaking» помогает завершить цикл стресс-реакции."
-                    }
-                }
-            },
-            5: {
-                subtitle: "День 5: Тайные жители",
-                parts: {
-                    1: {
-                        title: "Кто выбирает еду?",
-                        hook: "Твоя рука тянется за сладким будто сама по себе? Это не ты — это бактерии.",
-                        content: "В кишечнике живут бактерии, питающиеся сахаром. Когда ты кормишь их фастфудом, они размножаются и выделяют вещества, которые буквально «нашёпывают» тебе: «Съешь ещё сахара».",
-                        examples: [
-                            "🧬 <strong>Химический шантаж</strong>. Твоя тяга — это крик голодных бактерий.",
-                            "📉 <strong>Сахарный туман</strong>. Скачки глюкозы вызывают упадок сил."
-                        ],
-                        practice: {
-                            title: "🛠 Упражнение «Покорми защитника»",
-                            steps: [
-                                "Правило тарелки: начни с горсти зелени.",
-                                "Пауза на сахар: спроси себя, кого ты кормишь."
-                            ],
-                            tip: "Оставь паразитов на голодном пайке."
-                        }
-                    },
-                    2: {
-                        title: "Внутренний город",
-                        content: "Мы будем менять состав своего «внутреннего города». Через неделю правильного питания — бактерии начнут вымирать. Через месяц — сменятся на новых. Через два — ты другая.",
-                        examples: [
-                            "🌱 <strong>Хорошие бактерии</strong>. Любят клетчатку и ферментированные продукты.",
-                            "🍩 <strong>Плохие бактерии</strong>. Любят сахар и переработанную еду."
-                        ],
-                        tip: "Ось «кишечник-мозг» влияет на твоё настроение и выбор."
-                    },
-                    3: {
-                        title: "Вечерняя рефлексия",
-                        question: "Удалось ли сегодня обхитрить «тайных жителей»?",
-                        science: "Ось «кишечник-мозг» влияет на пищевое поведение."
-                    }
-                }
-            },
-            6: {
-                subtitle: "День 6: Сон — главная перезагрузка",
-                parts: {
-                    1: {
-                        title: "Ночная стройка",
-                        hook: "Ты спала 8 часов, но встала разбитой? Это «пищевое похмелье».",
-                        content: "Сон — это время «генеральной уборки» мозга. Если ты наелась на ночь, кровь уходит в ЖКТ, ремонта не будет. Поздний ужин нарушает работу желчного пузыря.",
-                        examples: [
-                            "🌙 <strong>После 20:00</strong>. Пищеварение должно отдыхать.",
-                            "📵 <strong>Синий свет</strong>. Экран — сигнал мозгу «не спи»."
-                        ],
-                        practice: {
-                            title: "🛠 Упражнение «Окно тишины»",
-                            steps: [
-                                "Последний приём пищи — за 3 часа до сна.",
-                                "Цифровой детокс за 1 час до сна."
-                            ],
-                            tip: "Биокомпьютер скажет спасибо завтра утром."
-                        }
-                    },
-                    2: {
-                        title: "Гормоны сна",
-                        content: "Недостаток сна нарушает баланс лептина и грелина — гормонов голода. Мало спишь — хочешь есть больше. Ешь больше — хуже спишь. Замкнутый круг.",
-                        examples: [
-                            "😴 <strong>Лептин</strong>. Гормон сытости. Уменьшается при недосыпе.",
-                            "🍔 <strong>Грелин</strong>. Гормон голода. Увеличивается при недосыпе."
-                        ],
-                        tip: "7-8 часов качественного сна — лучшая диета."
-                    },
-                    3: {
-                        title: "Вечерняя рефлексия",
-                        question: "Во сколько был твой последний приём пищи сегодня?",
-                        science: "Недостаток сна нарушает баланс лептина и грелина."
-                    }
-                }
-            },
-            7: {
-                subtitle: "День 7: Новая Я",
-                parts: {
-                    1: {
-                        title: "Свидание с собой",
-                        hook: "Поздравляю! Ты сделала то, что многие не делают годами: спустилась из головы в тело.",
-                        content: "Ты научилась слышать шёпот тела. Ты больше не «голова на палочке». Ты — цельная. Сила воли — ограниченный ресурс. Осознанность — навык.",
-                        examples: [
-                            "🌱 <strong>Минимализм</strong>. Оставь одну привычку, но железно.",
-                            "🎯 <strong>Контракт с собой</strong>. Выбери привычку на 30 дней."
-                        ],
-                        practice: {
-                            title: "🛠 Упражнение «Контракт с собой»",
-                            steps: [
-                                "Выбери ОДНУ привычку из марафона.",
-                                "Запиши её прямо сейчас.",
-                                "Обязуйся выполнять 30 дней."
-                            ],
-                            tip: "Один стабильный шаг лучше ста прыжков на месте."
-                        }
-                    },
-                    2: {
-                        title: "Что ты забираешь с собой",
-                        content: "Марафон заканчивается, но твой роман с собой — только начинается. Ты теперь знаешь, как слушать тело. Как различать голод и эмоцию. Как заботиться о себе.",
-                        examples: [
-                            "📓 <strong>Дневник</strong>. Продолжай записывать ощущения.",
-                            "🧘 <strong>Практика</strong>. Осознанность — это мышца, которую нужно тренировать."
-                        ],
-                        tip: "Для закрепления привычки требуется 18-254 дня."
-                    },
-                    3: {
-                        title: "Финальная рефлексия",
-                        question: "Какой главный инсайт ты забираешь с собой?",
-                        science: "Осознанность — это навык, который укрепляется с практикой.",
-                        isFinal: true
-                    }
-                }
-            }
-        };
-
-        let tg = window.Telegram?.WebApp;
-        if (tg) tg.ready();
-
-        const userId = tg?.initDataUnsafe?.user?.id || localStorage.getItem('userId') || 'demo_' + Date.now();
-        const userName = tg?.initDataUnsafe?.user?.first_name || 'Участница';
-        localStorage.setItem('userId', userId);
-
-        const getMarathonStartDate = () => {
-            const saved = localStorage.getItem(`start_${userId}`);
-            if (saved) return new Date(saved);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            localStorage.setItem(`start_${userId}`, today.toISOString());
-            return today;
-        };
-
-        const getCurrentDay = () => {
-            const start = getMarathonStartDate();
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const diff = Math.floor((today - start) / (1000 * 60 * 60 * 24));
-            return Math.min(diff + 1, 7);
-        };
-
-        let state = { day: 1, part: 1, answers: {} };
-
-        const loadState = () => {
-            const saved = localStorage.getItem(`state_${userId}`);
-            if (saved) {
-                const loaded = JSON.parse(saved);
-                state.part = loaded.part || 1;
-                state.answers = loaded.answers || {};
-            }
-            state.day = getCurrentDay();
-        };
-
-        const saveState = () => {
-            localStorage.setItem(`state_${userId}`, JSON.stringify({
-                part: state.part,
-                answers: state.answers
-            }));
-        };
-
-        const sendAnswer = async () => {
-            const textarea = document.getElementById('answer');
-            const answer = textarea.value.trim();
-
-            if (!answer) {
-                alert('Напиши ответ!');
-                return;
-            }
-
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.textContent = 'Отправляю...';
-
-            try {
-                await fetch('https://n8n.neyronikol.ru/webhook/marathon', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        userId, userName,
-                        day: state.day,
-                        part: state.part,
-                        answer,
-                        timestamp: new Date().toISOString()
-                    })
-                });
-
-                const key = `day_${state.day}_part_${state.part}`;
-                state.answers[key] = answer;
-                saveState();
-
-                document.getElementById('success').style.display = 'block';
-                btn.textContent = 'Отправлено! ✅';
-
-                setTimeout(() => render(), 1500);
-            } catch (err) {
-                console.error(err);
-                btn.disabled = false;
-                btn.textContent = 'Отправить ответ';
-                alert('Ошибка! Попробуй ещё');
-            }
-        };
-
-        const nextPart = () => {
-            if (state.part < 3) {
-                state.part++;
-            }
-            saveState();
-            render();
-        };
-
-        const render = () => {
-            const day = marathonContent[state.day];
-            const part = day.parts[state.part];
-            const key = `day_${state.day}_part_${state.part}`;
-            const savedAnswer = state.answers[key] || '';
-
-            let html = `
-                <div class="header">
-                    <div class="day-badge">День ${state.day} / 7</div>
-                    <h1>${day.subtitle}</h1>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${(state.day / 7) * 100}%"></div>
-                    </div>
-                </div>
-
-                <div class="content-section">
-                    <div class="part-title">${part.title}</div>
-            `;
-
-            if (part.hook) html += `<div class="hook">"${part.hook}"</div>`;
-            if (part.content) html += `<div class="content-text">${part.content}</div>`;
-            
-            if (part.examples?.length) {
-                html += `<div class="examples">
-                    ${part.examples.map(ex => `<div class="example-item">${ex}</div>`).join('')}
-                </div>`;
-            }
-
-            if (part.practice) {
-                html += `
-                    <div class="practice-box">
-                        <div class="practice-title">${part.practice.title}</div>
-                        <ul class="practice-steps">
-                            ${part.practice.steps.map(s => `<li>${s}</li>`).join('')}
-                        </ul>
-                        <div class="tip">${part.practice.tip}</div>
-                    </div>
-                `;
-            }
-
-            if (part.tip && !part.practice) html += `<div class="tip">${part.tip}</div>`;
-            html += '</div>';
-
-            html += `
-                <div class="form-section">
-                    <div class="question">${part.question}</div>
-                    <textarea id="answer">${savedAnswer}</textarea>
-            `;
-
-            if (part.science) html += `<div class="science-box">💡 ${part.science}</div>`;
-
-            html += `
-                <div id="success" class="success-msg">✅ Ответ отправлен!</div>
-                <div class="btn-group">
-                    <button id="submitBtn" class="btn-primary" onclick="sendAnswer()">Отправить ответ</button>
-                    ${state.part < 3 ? `<button class="btn-secondary" onclick="nextPart()">Пропустить →</button>` : ''}
-                </div>
-            `;
-
-            if (part.isFinal) {
-                html += `
-                    <div class="completion-msg">
-                        <h2>🎉 Марафон завершён!</h2>
-                        <p>Спасибо за путь! Продолжай слушать своё тело 💪</p>
-                    </div>
-                `;
-            }
-
-            html += '</div>';
-            document.getElementById('app').innerHTML = html;
-        };
-
-        loadState();
-        render();
-    </script>
-</body>
-</html>
+export default App;
