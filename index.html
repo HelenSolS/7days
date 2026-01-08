@@ -51,12 +51,6 @@
             margin-bottom: 10px;
         }
 
-        .subtitle {
-            color: #666;
-            font-size: 16px;
-            margin-bottom: 20px;
-        }
-
         .progress-bar {
             width: 100%;
             height: 8px;
@@ -171,6 +165,16 @@
             border-left: 4px solid #28a745;
         }
 
+        .science-box {
+            background: #e7f3ff;
+            color: #004085;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #0066cc;
+            font-size: 14px;
+            margin-top: 15px;
+        }
+
         .form-section {
             margin-top: 30px;
             padding-top: 30px;
@@ -202,15 +206,15 @@
             border-color: #667eea;
         }
 
-        .button-group {
+        .btn-group {
             display: flex;
             gap: 10px;
-            margin-top: 20px;
+            margin-bottom: 20px;
         }
 
         button {
             flex: 1;
-            padding: 12px;
+            padding: 14px;
             border: none;
             border-radius: 10px;
             font-weight: bold;
@@ -219,123 +223,55 @@
             transition: all 0.3s;
         }
 
-        .btn-submit {
+        .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
 
-        .btn-submit:hover:not(:disabled) {
+        .btn-primary:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
-        .btn-submit:disabled {
+        .btn-primary:disabled {
             opacity: 0.6;
             cursor: not-allowed;
-            transform: none;
         }
 
-        .btn-skip {
+        .btn-secondary {
             background: #f0f0f0;
             color: #666;
         }
 
-        .btn-skip:hover:not(:disabled) {
+        .btn-secondary:hover:not(:disabled) {
             background: #e0e0e0;
         }
 
-        .success-message {
+        .btn-secondary:disabled {
+            opacity: 0.5;
+        }
+
+        .success-msg {
             background: #d4edda;
             color: #155724;
             padding: 15px;
             border-radius: 10px;
-            margin-top: 20px;
+            margin-bottom: 15px;
             text-align: center;
             display: none;
         }
 
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .science-box {
-            background: #e7f3ff;
-            color: #004085;
-            padding: 12px;
-            border-radius: 8px;
-            border-left: 4px solid #0066cc;
-            font-size: 14px;
-            margin-top: 15px;
-        }
-
-        .navigation {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            justify-content: center;
-        }
-
-        .nav-btn {
-            padding: 10px 20px;
-            border: 1px solid #e0e0e0;
-            background: white;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .nav-btn:hover:not(:disabled) {
-            background: #f0f0f0;
-        }
-
-        .nav-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .completion-message {
+        .completion-msg {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 30px;
             border-radius: 15px;
             text-align: center;
-            margin-bottom: 20px;
         }
 
-        .completion-message h2 {
+        .completion-msg h2 {
             font-size: 24px;
             margin-bottom: 10px;
-        }
-
-        .locked-message {
-            background: #fff3cd;
-            color: #856404;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 20px;
-            border-left: 4px solid #ffc107;
-        }
-
-        .locked-message h2 {
-            margin-bottom: 10px;
-            font-size: 20px;
-        }
-
-        .locked-message p {
-            margin-bottom: 5px;
         }
     </style>
 </head>
@@ -345,7 +281,6 @@
     </div>
 
     <script>
-        // Контент марафона
         const marathonContent = {
             1: {
                 subtitle: "День 1: Осознанность тела",
@@ -380,8 +315,6 @@
                     3: {
                         title: "Вечерняя рефлексия",
                         question: "Какое место в теле сегодня дало о себе знать?",
-                        isReflection: true,
-                        extraQuestion: "Что вы заметили в своём теле сегодня?",
                         science: "Исследования показывают, что осознанность телесных ощущений снижает уровень кортизола и улучшает регуляцию нервной системы."
                     }
                 }
@@ -419,8 +352,6 @@
                     3: {
                         title: "Вечерняя рефлексия",
                         question: "Какое открытие ты сегодня сделала о своём вкусе?",
-                        isReflection: true,
-                        extraQuestion: "Что изменилось в твоём отношении к еде сегодня?",
                         science: "Осознанное питание помогает лучше чувствовать сигналы голода и сытости."
                     }
                 }
@@ -458,8 +389,6 @@
                     3: {
                         title: "Вечерняя рефлексия",
                         question: "После какой эмоции ты чаще всего тянется к холодильнику?",
-                        isReflection: true,
-                        extraQuestion: "Что ты сделала вместо того, чтобы есть? Или хотела бы сделать?",
                         science: "Mindful Eating снижает переедание, связанное с эмоциями."
                     }
                 }
@@ -496,8 +425,6 @@
                     3: {
                         title: "Вечерняя рефлексия",
                         question: "Почувствовала ли ты лёгкость после движения?",
-                        isReflection: true,
-                        extraQuestion: "Какое движение тебе нравится? Что хотела бы попробовать?",
                         science: "Техника «shaking» помогает завершить цикл стресс-реакции."
                     }
                 }
@@ -534,8 +461,6 @@
                     3: {
                         title: "Вечерняя рефлексия",
                         question: "Удалось ли сегодня обхитрить «тайных жителей»?",
-                        isReflection: true,
-                        extraQuestion: "Что ты ела сегодня? Было ли что-то особенно хорошее для живота?",
                         science: "Ось «кишечник-мозг» влияет на пищевое поведение."
                     }
                 }
@@ -572,8 +497,6 @@
                     3: {
                         title: "Вечерняя рефлексия",
                         question: "Во сколько был твой последний приём пищи сегодня?",
-                        isReflection: true,
-                        extraQuestion: "Как ты спишь в последнее время? Просыпаешься ли отдохнувшей?",
                         science: "Недостаток сна нарушает баланс лептина и грелина."
                     }
                 }
@@ -611,8 +534,6 @@
                     3: {
                         title: "Финальная рефлексия",
                         question: "Какой главный инсайт ты забираешь с собой?",
-                        isReflection: true,
-                        extraQuestion: "Какую привычку из марафона ты планируешь продолжить?",
                         science: "Осознанность — это навык, который укрепляется с практикой.",
                         isFinal: true
                     }
@@ -620,130 +541,111 @@
             }
         };
 
-        // Инициализация Telegram WebApp
         let tg = window.Telegram?.WebApp;
-        if (tg) {
-            tg.ready();
-        }
+        if (tg) tg.ready();
 
-        const getUserId = () => {
-            if (tg?.initDataUnsafe?.user?.id) {
-                return tg.initDataUnsafe.user.id;
-            }
-            return localStorage.getItem('userId') || 'demo_user_' + Date.now();
-        };
-
-        const getUserName = () => {
-            if (tg?.initDataUnsafe?.user?.username) {
-                return '@' + tg.initDataUnsafe.user.username;
-            }
-            if (tg?.initDataUnsafe?.user?.first_name) {
-                return tg.initDataUnsafe.user.first_name;
-            }
-            return 'Участница';
-        };
-
-        const userId = getUserId();
-        const userName = getUserName();
-
+        const userId = tg?.initDataUnsafe?.user?.id || localStorage.getItem('userId') || 'demo_' + Date.now();
+        const userName = tg?.initDataUnsafe?.user?.first_name || 'Участница';
         localStorage.setItem('userId', userId);
 
-        // Получить дату начала марафона из localStorage или текущую дату
         const getMarathonStartDate = () => {
-            const saved = localStorage.getItem(`marathon_start_${userId}`);
-            if (saved) {
-                return new Date(saved);
-            }
+            const saved = localStorage.getItem(`start_${userId}`);
+            if (saved) return new Date(saved);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            localStorage.setItem(`marathon_start_${userId}`, today.toISOString());
+            localStorage.setItem(`start_${userId}`, today.toISOString());
             return today;
         };
 
-        // Получить текущий день марафона
         const getCurrentDay = () => {
-            const startDate = getMarathonStartDate();
+            const start = getMarathonStartDate();
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            
-            const diffTime = today - startDate;
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            
-            const currentDay = diffDays + 1;
-            
-            // Ограничиваем максимум 7 днями
-            return Math.min(currentDay, 7);
+            const diff = Math.floor((today - start) / (1000 * 60 * 60 * 24));
+            return Math.min(diff + 1, 7);
         };
 
-        // Управление состоянием
-        let currentDay = 1;
-        let currentPart = 1;
-        let answers = {};
+        let state = { day: 1, part: 1, answers: {} };
 
-        // Загрузка состояния
         const loadState = () => {
-            const saved = localStorage.getItem(`marathon_state_${userId}`);
+            const saved = localStorage.getItem(`state_${userId}`);
             if (saved) {
-                const state = JSON.parse(saved);
-                currentPart = state.currentPart || 1;
-                answers = state.answers || {};
+                const loaded = JSON.parse(saved);
+                state.part = loaded.part || 1;
+                state.answers = loaded.answers || {};
             }
-            
-            // Всегда используем вычисленный день
-            currentDay = getCurrentDay();
+            state.day = getCurrentDay();
         };
 
-        // Сохранение состояния
         const saveState = () => {
-            localStorage.setItem(`marathon_state_${userId}`, JSON.stringify({
-                currentPart,
-                answers
+            localStorage.setItem(`state_${userId}`, JSON.stringify({
+                part: state.part,
+                answers: state.answers
             }));
         };
 
-        // Отправка ответов на n8n webhook
-        const sendAnswerToWebhook = async (dayNum, partNum, answer) => {
-            try {
-                const n8nWebhookUrl = 'https://n8n.neyronikol.ru/webhook/marathon'; // ЗАМЕНИ НА СВОЙ ВЕБХУК
-                
-                const payload = {
-                    userId,
-                    userName,
-                    day: dayNum,
-                    part: partNum,
-                    answer,
-                    timestamp: new Date().toISOString()
-                };
+        const sendAnswer = async () => {
+            const textarea = document.getElementById('answer');
+            const answer = textarea.value.trim();
 
-                const response = await fetch(n8nWebhookUrl, {
+            if (!answer) {
+                alert('Напиши ответ!');
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Отправляю...';
+
+            try {
+                await fetch('https://n8n.neyronikol.ru/webhook/marathon', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload)
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId, userName,
+                        day: state.day,
+                        part: state.part,
+                        answer,
+                        timestamp: new Date().toISOString()
+                    })
                 });
 
-                if (!response.ok) {
-                    console.error('Ошибка отправки:', response.statusText);
-                }
-            } catch (error) {
-                console.error('Ошибка при отправке ответа:', error);
+                const key = `day_${state.day}_part_${state.part}`;
+                state.answers[key] = answer;
+                saveState();
+
+                document.getElementById('success').style.display = 'block';
+                btn.textContent = 'Отправлено! ✅';
+
+                setTimeout(() => render(), 1500);
+            } catch (err) {
+                console.error(err);
+                btn.disabled = false;
+                btn.textContent = 'Отправить ответ';
+                alert('Ошибка! Попробуй ещё');
             }
         };
 
-        // Рендер контента
+        const nextPart = () => {
+            if (state.part < 3) {
+                state.part++;
+            }
+            saveState();
+            render();
+        };
+
         const render = () => {
-            const day = marathonContent[currentDay];
-            const part = day.parts[currentPart];
-            const dayKey = `day_${currentDay}_part_${currentPart}`;
-            const savedAnswer = answers[dayKey] || '';
+            const day = marathonContent[state.day];
+            const part = day.parts[state.part];
+            const key = `day_${state.day}_part_${state.part}`;
+            const savedAnswer = state.answers[key] || '';
 
             let html = `
                 <div class="header">
-                    <div class="day-badge">День ${currentDay} из 7</div>
+                    <div class="day-badge">День ${state.day} / 7</div>
                     <h1>${day.subtitle}</h1>
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${(currentDay / 7) * 100}%"></div>
+                        <div class="progress-fill" style="width: ${(state.day / 7) * 100}%"></div>
                     </div>
                 </div>
 
@@ -751,20 +653,13 @@
                     <div class="part-title">${part.title}</div>
             `;
 
-            if (part.hook) {
-                html += `<div class="hook">"${part.hook}"</div>`;
-            }
-
-            if (part.content) {
-                html += `<div class="content-text">${part.content}</div>`;
-            }
-
-            if (part.examples && part.examples.length > 0) {
-                html += `
-                    <div class="examples">
-                        ${part.examples.map(ex => `<div class="example-item">${ex}</div>`).join('')}
-                    </div>
-                `;
+            if (part.hook) html += `<div class="hook">"${part.hook}"</div>`;
+            if (part.content) html += `<div class="content-text">${part.content}</div>`;
+            
+            if (part.examples?.length) {
+                html += `<div class="examples">
+                    ${part.examples.map(ex => `<div class="example-item">${ex}</div>`).join('')}
+                </div>`;
             }
 
             if (part.practice) {
@@ -772,134 +667,45 @@
                     <div class="practice-box">
                         <div class="practice-title">${part.practice.title}</div>
                         <ul class="practice-steps">
-                            ${part.practice.steps.map(step => `<li>${step}</li>`).join('')}
+                            ${part.practice.steps.map(s => `<li>${s}</li>`).join('')}
                         </ul>
                         <div class="tip">${part.practice.tip}</div>
                     </div>
                 `;
             }
 
-            if (part.tip && !part.practice) {
-                html += `<div class="tip">${part.tip}</div>`;
-            }
-
+            if (part.tip && !part.practice) html += `<div class="tip">${part.tip}</div>`;
             html += '</div>';
 
-            // Форма для ответов
             html += `
                 <div class="form-section">
-                    <div class="question">${part.question || part.extraQuestion}</div>
-                    <textarea id="answer" placeholder="Напиши своё размышление...">${savedAnswer}</textarea>
+                    <div class="question">${part.question}</div>
+                    <textarea id="answer">${savedAnswer}</textarea>
             `;
 
-            if (part.science) {
-                html += `<div class="science-box">💡 ${part.science}</div>`;
-            }
+            if (part.science) html += `<div class="science-box">💡 ${part.science}</div>`;
 
-            // Кнопки
             html += `
-                <div class="button-group">
-                    <button class="btn-submit" id="submitBtn" onclick="submitAnswer()">
-                        Отправить ответ
-                    </button>
-                    ${currentPart < 3 ? `<button class="btn-skip" onclick="skipPart()">Пропустить</button>` : ''}
-                </div>
-
-                <div class="success-message" id="successMessage">
-                    ✅ Ответ отправлен! Завтра новый день 💪
-                </div>
-
-                <div class="navigation">
-                    ${currentDay > 1 || currentPart > 1 ? `<button class="nav-btn" onclick="prevPart()">← Назад</button>` : ''}
-                    ${!(currentDay === 7 && currentPart === 3) ? `<button class="nav-btn" onclick="nextPart()" ${currentPart === 3 ? '' : 'disabled'}>Дальше →</button>` : ''}
+                <div id="success" class="success-msg">✅ Ответ отправлен!</div>
+                <div class="btn-group">
+                    <button id="submitBtn" class="btn-primary" onclick="sendAnswer()">Отправить ответ</button>
+                    ${state.part < 3 ? `<button class="btn-secondary" onclick="nextPart()">Пропустить →</button>` : ''}
                 </div>
             `;
 
             if (part.isFinal) {
                 html += `
-                    <div class="completion-message">
+                    <div class="completion-msg">
                         <h2>🎉 Марафон завершён!</h2>
-                        <p>Спасибо за то, что прошла этот путь. Ты молодец! 💪</p>
-                        <p style="margin-top: 15px; font-size: 14px;">Продолжай практиковать осознанность каждый день. Твоё тело благодарно за внимание!</p>
+                        <p>Спасибо за путь! Продолжай слушать своё тело 💪</p>
                     </div>
                 `;
             }
 
             html += '</div>';
-
             document.getElementById('app').innerHTML = html;
         };
 
-        window.submitAnswer = async () => {
-            const answer = document.getElementById('answer').value;
-            
-            if (!answer.trim()) {
-                alert('Пожалуйста, напиши свой ответ');
-                return;
-            }
-
-            const dayKey = `day_${currentDay}_part_${currentPart}`;
-            answers[dayKey] = answer;
-
-            document.getElementById('submitBtn').disabled = true;
-            document.getElementById('submitBtn').innerHTML = '<span class="loading"></span>Отправляю...';
-
-            // Отправка на n8n
-            await sendAnswerToWebhook(currentDay, currentPart, answer);
-
-            // Показ успеха
-            const successMsg = document.getElementById('successMessage');
-            successMsg.style.display = 'block';
-
-            saveState();
-
-            // Если это последняя часть дня - разблокировать кнопку "дальше"
-            if (currentPart === 3) {
-                setTimeout(() => {
-                    const nextBtn = document.querySelector('.nav-btn:last-child');
-                    if (nextBtn && !nextBtn.disabled) {
-                        nextBtn.disabled = false;
-                    }
-                }, 1000);
-            }
-
-            setTimeout(() => {
-                document.getElementById('submitBtn').disabled = false;
-                document.getElementById('submitBtn').innerHTML = 'Отправить ответ';
-            }, 2000);
-        };
-
-        window.skipPart = () => {
-            if (currentPart < 3) {
-                currentPart++;
-                saveState();
-                render();
-            }
-        };
-
-        window.nextPart = () => {
-            if (currentPart < 3) {
-                currentPart++;
-            } else if (currentDay < 7) {
-                currentDay++;
-                currentPart = 1;
-            }
-            saveState();
-            render();
-        };
-
-        window.prevPart = () => {
-            if (currentPart > 1) {
-                currentPart--;
-            } else if (currentDay > 1) {
-                currentDay--;
-                currentPart = 3;
-            }
-            saveState();
-            render();
-        };
-
-        // Инициализация
         loadState();
         render();
     </script>
