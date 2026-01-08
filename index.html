@@ -224,7 +224,7 @@
             color: white;
         }
 
-        .btn-submit:hover {
+        .btn-submit:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
@@ -240,7 +240,7 @@
             color: #666;
         }
 
-        .btn-skip:hover {
+        .btn-skip:hover:not(:disabled) {
             background: #e0e0e0;
         }
 
@@ -317,6 +317,25 @@
         .completion-message h2 {
             font-size: 24px;
             margin-bottom: 10px;
+        }
+
+        .locked-message {
+            background: #fff3cd;
+            color: #856404;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .locked-message h2 {
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        .locked-message p {
+            margin-bottom: 5px;
         }
     </style>
 </head>
@@ -629,6 +648,33 @@
 
         localStorage.setItem('userId', userId);
 
+        // Получить дату начала марафона из localStorage или текущую дату
+        const getMarathonStartDate = () => {
+            const saved = localStorage.getItem(`marathon_start_${userId}`);
+            if (saved) {
+                return new Date(saved);
+            }
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            localStorage.setItem(`marathon_start_${userId}`, today.toISOString());
+            return today;
+        };
+
+        // Получить текущий день марафона
+        const getCurrentDay = () => {
+            const startDate = getMarathonStartDate();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const diffTime = today - startDate;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            const currentDay = diffDays + 1;
+            
+            // Ограничиваем максимум 7 днями
+            return Math.min(currentDay, 7);
+        };
+
         // Управление состоянием
         let currentDay = 1;
         let currentPart = 1;
@@ -639,16 +685,17 @@
             const saved = localStorage.getItem(`marathon_state_${userId}`);
             if (saved) {
                 const state = JSON.parse(saved);
-                currentDay = state.currentDay || 1;
                 currentPart = state.currentPart || 1;
                 answers = state.answers || {};
             }
+            
+            // Всегда используем вычисленный день
+            currentDay = getCurrentDay();
         };
 
         // Сохранение состояния
         const saveState = () => {
             localStorage.setItem(`marathon_state_${userId}`, JSON.stringify({
-                currentDay,
                 currentPart,
                 answers
             }));
@@ -657,8 +704,7 @@
         // Отправка ответов на n8n webhook
         const sendAnswerToWebhook = async (dayNum, partNum, answer) => {
             try {
-                const n8nWebhookUrl = 'const n8nWebhookUrl = 'https://n8n.neyronikol.ru/webhook/marathon';
-'; // ТЫ ЗАМЕНИШ НА СВОЙ ВЕБХУК ИЗ N8N
+                const n8nWebhookUrl = 'https://n8n.neyronikol.ru/webhook/marathon'; // ЗАМЕНИ НА СВОЙ ВЕБХУК
                 
                 const payload = {
                     userId,
@@ -760,7 +806,7 @@
                 </div>
 
                 <div class="success-message" id="successMessage">
-                    ✅ Ответ отправлен! Спасибо за участие.
+                    ✅ Ответ отправлен! Завтра новый день 💪
                 </div>
 
                 <div class="navigation">
